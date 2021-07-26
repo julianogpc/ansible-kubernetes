@@ -34,8 +34,26 @@
   when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux') and inventory_hostname in groups['worker-node']
   tags: [firewall]
 
+- name: Allow iptables
+  iptables:
+    chain: INPUT
+    protocol: "{{ item.protocol }}"
+    destination_port: "{{ item.dport }}"
+    ctstate: NEW
+    match: state
+    jump: ACCEPT
+    comment: "{{ item.comment }}"
+  with_items:
+  - { protocol: tcp, dport: 6783, comment: "Accept Weave Net connections."}
+  - { protocol: udp, dport: 6783, comment: "Accept Weave Net connections."}
+  - { protocol: udp, dport: 6784, comment: "Accept Weave Net connections."}
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+  tags: [firewall]
+  register: iptables
+
 - name: Reload service firewalld
   systemd:
     name: firewalld
     state: reloaded
-  when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux') and firewalld.changed
+  when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux') and (firewalld.changed or iptables.changed)
+  tags: [firewall]

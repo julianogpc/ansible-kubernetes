@@ -9,6 +9,21 @@
     - 8443/tcp
   register: firewalld
 
+- name: Allow iptables
+  iptables:
+    chain: INPUT
+    protocol: "{{ item.protocol }}"
+    destination_port: "{{ item.dport }}"
+    ctstate: NEW
+    match: state
+    jump: ACCEPT
+    comment: "{{ item.comment }}"
+  with_items:
+  - { protocol: tcp, dport: 8443, comment: "Accept vip keepalived connections."}
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+  tags: [firewall]
+  register: iptables
+
 - name: Reload service firewalld
   systemd:
     name: firewalld
