@@ -1,0 +1,34 @@
+---
+
+- name: Add IP address of master hosts to load_balancer hosts
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '.*{{ item }}$'
+    line: "{{ hostvars[item].ansible_host }} {{item}}"
+    state: present
+  when: hostvars[item].ansible_host is defined
+  with_items: "{{ groups.master }}"
+  register: hosts
+
+- name: Install haproxy
+  dnf:
+    name: haproxy-1.8.27-2.el8
+    state: present
+
+- name: Copy a "haproxy.cfg" file
+  ansible.builtin.copy:
+    src: haproxy.cfg
+    dest: /etc/haproxy/haproxy.cfg
+    backup: yes
+    owner: root
+    group: root
+    mode: '0644'
+  register: haproxy_cfg
+
+- name: Start haproxy service
+  service:
+    name: haproxy
+    daemon_reload: yes
+    state: reloaded
+    enabled: yes
+  when: haproxy_cfg.changed or hosts.changed

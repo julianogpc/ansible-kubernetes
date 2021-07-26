@@ -1,0 +1,41 @@
+---
+
+- ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+  with_items:
+    - 6443/tcp
+    - 2379-2380/tcp
+    - 10250/tcp
+    - 10251/tcp
+    - 10252/tcp
+    - 10255/tcp
+    - 6783/tcp
+    - 6784/tcp
+    - 6783/udp
+    - 6784/udp
+  register: firewalld
+  when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux') and inventory_hostname in groups['master']
+  tags: [firewall]
+
+- ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+  with_items:
+    - 30000-32767/tcp
+    - 10250/tcp
+    - 6783/tcp
+    - 6784/tcp
+    - 6783/udp
+    - 6784/udp
+  register: firewalld
+  when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux') and inventory_hostname in groups['worker-node']
+  tags: [firewall]
+
+- name: Reload service firewalld
+  systemd:
+    name: firewalld
+    state: reloaded
+  when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux') and firewalld.changed

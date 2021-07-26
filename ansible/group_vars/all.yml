@@ -1,0 +1,6 @@
+enable_dashboard: true
+enable_pod_network: true
+apiserver_vip: 172.19.8.10
+load_balancer_dns: 172.19.8.10
+load_balancer_port: 8443
+pod_network_cidr: 172.18.0.0/16

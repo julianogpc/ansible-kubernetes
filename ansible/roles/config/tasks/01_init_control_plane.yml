@@ -1,0 +1,73 @@
+
+---
+- name: Reset Kubernetes component
+  shell: "kubeadm reset --force"
+  register: reset_cluster
+
+- name: Initialize the Kubernetes cluster using kubeadm
+  when: reset_cluster is succeeded
+  shell: |
+    kubeadm init --apiserver-advertise-address "{{ ansible_host }}" --pod-network-cidr "{{ pod_network_cidr }}" --control-plane-endpoint "{{ load_balancer_dns }}:{{ load_balancer_port }}" --upload-certs
+  register: init_cluster
+  # See: https://github.com/jetstack/cert-manager/issues/2640 with using kubeadm + calico + cert-manager
+  environment:
+    no_proxy: "$no_proxy,.svc,.svc.cluster.local"
+  run_once: true
+
+- name: Setup kubeconfig for vagrant user
+  command: "{{ item }}"
+  with_items:
+    - mkdir -p /home/vagrant/.kube
+    - cp -f /etc/kubernetes/admin.conf /home/vagrant/.kube/config
+    - chown vagrant:vagrant /home/vagrant/.kube/config
+
+- name: Generate certificate key
+  command: kubeadm init phase upload-certs --upload-certs
+  register: certificate_key
+
+- name: Generate join command fot Control Plane
+  command: kubeadm token create --print-join-command --certificate-key {{ certificate_key.stdout_lines[2] }}
+  register: join_command_control_plane
+
+- name: Generate join command for Work Nodes
+  command: kubeadm token create --print-join-command
+  register: join_command_work_nodes
+
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: "{{ role_path }}/files"
+    state: directory
+    mode: '0755'
+  become: no
+  delegate_to: localhost
+
+- name: Copy control plane join command to local file
+  local_action: copy content="{{ join_command_control_plane.stdout_lines[0] }}" dest="{{ role_path }}/files/join-command-control-plane"
+  become: no
+
+- name: Copy work node  join command to local file
+  local_action: copy content="{{ join_command_work_nodes.stdout_lines[0] }}" dest="{{ role_path }}/files/join-command-work-node"
+  become: no
+
+- name: Get Kubernetes Version
+  shell: kubectl version | base64 | tr -d '\n'
+  register: kubever
+  ignore_errors: True
+
+- name: Deploy kubernetes pod network into cluster
+  when: init_cluster is succeeded and enable_pod_network
+  command: |
+    kubectl apply --kubeconfig=/etc/kubernetes/admin.conf \
+        -f "https://cloud.weave.works/k8s/net?k8s-version={{ kubever.stdout }}"
+  ignore_errors: true
+
+- name: Deploy kubernetes dashboard into cluster
+  when: init_cluster is succeeded and enable_dashboard
+  command: |
+    kubectl --kubeconfig=/etc/kubernetes/admin.conf \
+        apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended.yaml
+  register: create_result
+  until: create_result.rc == 0
+  retries: 5
+  delay: 2
+  ignore_errors: true

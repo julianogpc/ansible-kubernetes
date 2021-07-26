@@ -1,0 +1,10 @@
+---
+
+- name: Include task list in play
+  import_tasks: firewall.yml
+
+- name: Include task list in play
+  import_tasks: keepalived.yml
+
+- name: Include task list in play
+  import_tasks: haproxy.yml

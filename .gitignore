@@ -1,0 +1,8 @@
+# Ignore .vagrant folder
+.vagrant
+
+# Ignore join command
+ansible/roles/config/files/join-command*
+
+# Python virtual environment 
+venv

@@ -1,0 +1,38 @@
+---
+- name: Remove swapfile from /etc/fstab
+  mount:
+    name: "{{ item }}"
+    fstype: swap
+    state: absent
+  with_items:
+    - swap
+    - none
+
+- name: Disable swap
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+- name: Add Kubernetes repository
+  yum_repository:
+    name: Kubernetes
+    description: Kubernetes YUM repo
+    baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+    enabled: yes
+    gpgcheck: yes
+    repo_gpgcheck: yes
+    gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+
+- name: Install kubeadm
+  dnf: 
+    name: kubeadm
+    state: present
+    update_cache: yes
+  register: kubeadm
+
+- name: Restart kubelet
+  service:
+    name: kubelet
+    daemon_reload: yes
+    enabled: yes
+    state: restarted
+  when: kubeadm.changed

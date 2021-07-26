@@ -1,0 +1,16 @@
+---
+
+- ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+  with_items:
+    - 8443/tcp
+  register: firewalld
+
+- name: Reload service firewalld
+  systemd:
+    name: firewalld
+    state: reloaded
+  when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux') and firewalld.changed

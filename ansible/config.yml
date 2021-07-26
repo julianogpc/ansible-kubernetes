@@ -1,0 +1,7 @@
+- hosts: "{{ 'master[0]:' if 'init-control-plane' in ansible_run_tags }}{{ 'master[1:]:' if 'join-control-plane' in ansible_run_tags }}{{ 'worker-node:' if 'join-worker-node' in ansible_run_tags }}"
+  become: yes
+  become_user: root
+  gather_facts: no
+
+  roles:
+  - role: config

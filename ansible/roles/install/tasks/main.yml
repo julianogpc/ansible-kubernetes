@@ -1,0 +1,49 @@
+---
+
+- name: Add IP address of all hosts to all hosts
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '.*{{ item }}$'
+    line: "{{ hostvars[item].ansible_host }} {{item}}"
+    state: present
+  when: hostvars[item].ansible_host is defined
+  with_items: "{{ groups.all }}"
+
+- name: Install python selinux library required by future ansible modules
+  yum:
+    name: libselinux-python3
+    state: present
+    update_cache: true
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: Disable SELinux
+  ansible.posix.selinux:
+    state: disabled
+  register: disable_selinux
+
+- name: Reboot a slow machine that might have lots of updates to apply
+  reboot:
+    reboot_timeout: 60
+  when: disable_selinux.changed
+
+- name: Add the br_netfilter module
+  community.general.modprobe:
+    name: br_netfilter
+    state: present
+
+- name: Update kernel settings
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+    sysctl_set: yes
+    state: present
+    reload: yes
+
+- name: Include task list in play
+  import_tasks: firewall.yml
+
+- name: Include task list in play
+  import_tasks: docker.yml
+
+- name: Include task list in play
+  import_tasks: kubernetes.yml
