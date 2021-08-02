@@ -13,7 +13,7 @@ vrrp_script check_apiserver {
 }
 
 vrrp_instance VI_1 {
-{% if inventory_hostname == groups.master[0] %}
+{% if inventory_hostname == "groups.control_plane[0]" %}
     state MASTER
 {% else %}
     state BACKUP

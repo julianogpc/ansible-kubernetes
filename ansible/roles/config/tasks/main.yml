@@ -5,7 +5,7 @@
     - name: Include task list in play
       import_tasks: 01_init_control_plane.yml
       tags: [ 'never', 'init-control-plane' ]
-  when: inventory_hostname in groups['master'][0]
+  when: inventory_hostname in groups['control_plane'][0]
   become: true
   become_user: root
 
@@ -14,7 +14,7 @@
     - name: Include task list in play
       import_tasks: 02_join_control_plane.yml
       tags: [ 'never', 'join-control-plane' ]
-  when: inventory_hostname not in groups['master'][0]
+  when: inventory_hostname not in groups['control_plane'][0]
   become: true
   become_user: root
 
@@ -23,6 +23,6 @@
     - name: Include task list in play
       import_tasks: 03_join_worker_node.yml
       tags: [ 'never', 'join-worker-node' ]
-  when: inventory_hostname in groups['worker-node']
+  when: inventory_hostname in groups['worker_node']
   become: true
   become_user: root

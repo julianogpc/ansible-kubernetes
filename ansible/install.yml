@@ -1,4 +1,4 @@
-- hosts: master:worker-node
+- hosts: control_plane:worker_node
   become: yes
   become_user: root
   gather_facts: yes

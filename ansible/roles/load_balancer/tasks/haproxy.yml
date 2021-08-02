@@ -1,13 +1,13 @@
 ---
 
-- name: Add IP address of master hosts to load_balancer hosts
+- name: Add IP address of control plane hosts to load_balancer hosts
   lineinfile:
     dest: /etc/hosts
     regexp: '.*{{ item }}$'
     line: "{{ hostvars[item].ansible_host }} {{item}}"
     state: present
   when: hostvars[item].ansible_host is defined
-  with_items: "{{ groups.master }}"
+  with_items: "{{ groups.control_plane }}"
   register: hosts
 
 - name: Install haproxy

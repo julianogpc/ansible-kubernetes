@@ -16,7 +16,7 @@
     - 6783/udp
     - 6784/udp
   register: firewalld
-  when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux') and inventory_hostname in groups['master']
+  when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux') and inventory_hostname in groups['control_plane']
   tags: [firewall]
 
 - ansible.posix.firewalld:
@@ -31,7 +31,7 @@
     - 6783/udp
     - 6784/udp
   register: firewalld
-  when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux') and inventory_hostname in groups['worker-node']
+  when: (ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux') and inventory_hostname in groups['worker_node']
   tags: [firewall]
 
 - name: Allow iptables

@@ -5,43 +5,52 @@ export RICHGO_FORCE_COLOR=1
 export ANSIBLE_CONFIG=./ansible/ansible.cfg
 export DEFAULT_HOST_LIST=./ansible/hosts.yml
 
-ANSIBLE_EXTRA_ARGS=""
+ANSIBLE_EXTRA_ARGS="--timeout=10"
 
 .ONESHELL:
 
-default: prepare
+##########################################################
+### Prepare
+##########################################################
+default: activate-venv
 
 install-ansible:
 	@ virtualenv venv
 	@ . venv/bin/activate
 	@ pip install -r ansible/requirements.txt
 
-prepare:
+activate-venv:
 	@ . venv/bin/activate
 
-ping: prepare
-	@ ansible -i ${DEFAULT_HOST_LIST} -m ping all ${ANSIBLE_EXTRA_ARGS}
+ping: activate-venv
+	@ ansible -i ${DEFAULT_HOST_LIST} -m ping all
 
-install-load-balancer: prepare
+
+##########################################################
+### Install
+##########################################################
+install-load-balancer: activate-venv
 	@ ansible-playbook ansible/load_balancer.yml ${ANSIBLE_EXTRA_ARGS}
 
-install-k8s: prepare
+install-k8s: activate-venv
 	@ ansible-playbook ansible/install.yml ${ANSIBLE_EXTRA_ARGS}
 
-install-k8s-work-node: prepare
-	@ ansible-playbook ansible/config_work_node.yml ${ANSIBLE_EXTRA_ARGS}
 
-config-k8s-init-control-plane: prepare
+##########################################################
+### Configuration
+##########################################################
+config-k8s-init-control-plane: activate-venv
 	@ ansible-playbook ansible/config.yml --tags init-control-plane ${ANSIBLE_EXTRA_ARGS}
 
-config-k8s-join-control-plane: prepare
+config-k8s-join-control-plane: activate-venv
 	@ ansible-playbook ansible/config.yml --tags join-control-plane ${ANSIBLE_EXTRA_ARGS}
 
-config-k8s-join-worker-node: prepare
+config-k8s-join-worker-node: activate-venv
 	@ ansible-playbook ansible/config.yml --tags join-worker-node ${ANSIBLE_EXTRA_ARGS}
 
-config-k8s-all: prepare
-	@ ansible-playbook ansible/config.yml --tags="init-control-plane,join-control-plane,join-worker-node" ${ANSIBLE_EXTRA_ARGS}
 
-reset-k8s: prepare
-	@ ansible-playbook ansible/uninstall.yml
+##########################################################
+### Uninstall
+##########################################################
+reset-k8s: activate-venv
+	@ ansible-playbook ansible/uninstall.yml ${ANSIBLE_EXTRA_ARGS}

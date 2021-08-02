@@ -7,7 +7,7 @@
 - name: Initialize the Kubernetes cluster using kubeadm
   when: reset_cluster is succeeded
   shell: |
-    {{lookup('file', 'join-command-worker-node') }} --apiserver-advertise-address="{{ ansible_host }}"
+    {{lookup('file', 'join-command-worker-node') }} --apiserver-advertise-address="{{ ansible_host }}" --ignore-preflight-errors='Mem'
   # See: https://github.com/jetstack/cert-manager/issues/2640 with using kubeadm + calico + cert-manager
   environment:
     no_proxy: "$no_proxy,.svc,.svc.cluster.local"

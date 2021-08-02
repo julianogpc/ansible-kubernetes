@@ -25,7 +25,7 @@
   command: kubeadm init phase upload-certs --upload-certs
   register: certificate_key
 
-- name: Generate join command fot Control Plane
+- name: Generate join command for Control Plane
   command: kubeadm token create --print-join-command --certificate-key {{ certificate_key.stdout_lines[2] }}
   register: join_command_control_plane
 
@@ -46,7 +46,7 @@
   become: no
 
 - name: Copy work node  join command to local file
-  local_action: copy content="{{ join_command_work_nodes.stdout_lines[0] }}" dest="{{ role_path }}/files/join-command-work-node"
+  local_action: copy content="{{ join_command_work_nodes.stdout_lines[0] }}" dest="{{ role_path }}/files/join-command-worker-node"
   become: no
 
 - name: Get Kubernetes Version
